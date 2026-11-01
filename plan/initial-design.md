@@ -6,7 +6,8 @@ it is not a screen specification or a commitment to build every feature in the f
 ## 1. Purpose
 
 IronStone HOME (Home Organization-Mechanization Ensuite) helps people organize life at home: their shared digital
-space, conversations, projects, schoolwork and homeschooling, chores, house and vehicles, kitchen, and money.
+space, photos/music/videos, ebooks and audiobooks, conversations, projects, schoolwork and homeschooling, chores,
+house and vehicles, kitchen, and money.
 It should be useful to one person, a family, or another household arrangement, with selected participation by
 extended family and friends.
 
@@ -62,6 +63,7 @@ The current sources distinguish working foundations from planned capabilities:
 | Maintenance | Existing facilities, assets, work efforts, requests, equipment history and shared screens; a detailed maintenance design | [Maintenance](../../mr-boss/plan/design-maintenance.md) remains a draft, and its app has placeholder screens. Full preventive scheduling and procedure execution are dependencies to build, not finished functionality to rename. |
 | Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is also a draft with placeholder app screens. Delegated household administration must be implemented over the existing primitives. |
 | Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../docs/interfaces/Sync.md) and [Revision management](../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
+| Media storage and delivery | ResourceFacade/ResourceReference, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
 
 Reuse in three ways:
 
@@ -93,14 +95,15 @@ child-activity dashboard or a notification for every ordinary action.
 
 | Proposed app | Household purpose and initial sections | Reuse from BOSS and its foundations |
 | --- | --- | --- |
-| **Commons** | Calendar, contacts, files, photos as files, notes, household knowledge and personal tasks | Most Commons functionality: calendars and sharing, contact books, drives, versions, wiki, attachments, search and Today. Office editing uses the shared integration when available. |
+| **Commons** | Calendar, contacts, files, notes, household knowledge and personal tasks | Most Commons functionality: calendars and sharing, contact books, drives, versions, wiki, attachments, search and Today. Office editing uses the shared integration when available. |
+| **Media** | Personal and shared photos, music, videos, ebooks and audiobooks; libraries, albums, playlists, bookshelves, viewers/readers/players and personal reading/listening progress | ResourceFacade storage and media-access APIs, drive sharing, versions, image processing, search and streaming; new catalog and dedicated screens. Support git on Postgres, git on filesystem, DbResource and plain local filesystem. |
 | **Comms** | Family and friend conversations, email, chat, calls and video | Most Comms functionality and its framework mail/chat/call services. Household rooms, selected contacts and family-oriented entry points replace business directory assumptions. |
 | **Projects** | Home improvements, trips, hobbies, events and personal projects | Projects and shared work items, boards, milestones, calendar views, checklists, documents and discussions. Optional code and time tools remain useful for homelab and learning projects. |
 | **School** | Schoolwork at home; homeschool subjects/curricula, learning plans, assignments, resources, portfolios and basic requirement records | Projects' shared work items and planning tools; Commons wiki, files, calendars and sharing. New curriculum/learner context organizes established external curricula and courseware, starting with direct resource links. |
 | **Home & Auto** | Places and belongings, cleaning and chores, repairs, preventive care, vehicles, service history and manuals | Maintenance's facilities/assets/work model and planned procedures/schedules; Projects tasks; Commons calendars/files; selected inventory and expense functions. |
 | **Kitchen** | Recipes, meal plans, shopping lists, pantry/fridge/freezer and leftovers | Commons sharing/calendar/files; Products' item/unit concepts; Warehouse's stock/location primitives where useful; selected Purchasing and Accounting concepts for shopping and receipts. The meal workflow is new. |
 | **Money** | Account registers, income and spending, categories, bills/reminders, budgets, savings goals and reconciliation | Accounting's banking, payments, imports, reconciliation, budgets and ledger integrity, with a new simple personal-finance surface. |
-| **Home Lab** | Personal-cloud setup and shortcuts, device sync, service readiness, storage/backup visibility and optional technical projects | Commons/Comms as the everyday cloud apps, BOSS Admin's planned configuration surfaces, existing framework tools/monitoring, and Projects' git capabilities. |
+| **Home Lab** | Personal-cloud setup and shortcuts, device sync, service readiness, storage/backup visibility and optional technical projects | Commons/Comms/Media as the everyday cloud apps, BOSS Admin's planned configuration surfaces, existing framework tools/monitoring, and Projects' git capabilities. |
 | **Household** | Members and invitations, sharing, access choices, household preferences and app setup | Party/organization relationships and framework accounts; BOSS Admin's identity/access designs and shared settings patterns. No employment or payroll setup. |
 
 Home Lab and Household will normally be less prominent than the daily apps. A regular member may only need
@@ -118,9 +121,10 @@ family documents, school files, appliance manuals, recipes, trip plans and a sha
 files remain private unless shared. A household calendar does not imply access to every member's private calendar.
 
 Keep the existing capabilities for attachments, version history, collaborative notes, links to tasks and record
-conversations. Expose a useful subset first and retain advanced tools for users who want them. Photos initially use
-Files' available browsing and previews; album curation, automatic camera uploads and a photo-library replacement
-are separate follow-up work.
+conversations. Expose a useful subset first and retain advanced tools for users who want them. **Media owns the
+dedicated photo, music, video, ebook and audiobook experience**, including albums, bookshelves and the
+viewer/reader/player screens. Commons keeps general file/drive management and can link a media file into Media;
+it does not grow a parallel media library or book reader.
 
 Comms supports household rooms, project conversations and selected family/friend groups. Email can use an existing
 provider; operating a household mail server is optional. External messaging bridges and telephony are capabilities
@@ -129,7 +133,159 @@ child's channels and contacts; within them the child can communicate independent
 help and request a new contact. Account administration does not automatically grant access to private messages.
 Shared access and contact restrictions must be enforced by services as well as menus.
 
-### 3.2 Projects and personal tasks
+### 3.2 Media: photos, music, videos, ebooks and audiobooks
+
+**Media is a standalone HOME app**, with its own launcher entry, access grant and dedicated screens for **Photos**,
+**Music**, **Videos**, **Books & audiobooks**, **Albums & playlists**, and **Libraries & sources**. It combines
+library management with a photo viewer, ebook reader and music/video/audiobook players. A Media user does not need
+the Commons app-root grant, though both apps use the same ResourceFacade and access services.
+
+**Personal and shared libraries.** A person can maintain private media and choose what to share with the household,
+selected family/friends or another authorized group. A household can maintain shared libraries with separate view,
+contribute and manage capabilities. Shared albums and playlists refer to media items; they do not make another
+copy of each file. An item can appear in several collections while retaining one identity and source reference.
+The visible library can span several explicitly selected storage sources, each with a chosen destination for new
+uploads. Ownership, audience and physical storage are separate choices.
+
+The initial media experiences are:
+
+| Area | Library management | Viewer/reader/player |
+| --- | --- | --- |
+| **Photos** | Thumbnail grid and date/timeline browsing; albums, titles/captions, tags, favorites and search; capture date, orientation and available camera metadata | Dedicated full-size photo view, previous/next, zoom, fullscreen and slideshow. Preserve the original; any later edits or exports are explicit variants. |
+| **Music** | Artists, albums, tracks, genres and available embedded tags/artwork; editable catalog metadata and personal/shared playlists | Audio player with a queue, play/pause, seek, volume, previous/next, repeat and shuffle; keep the queue while navigating HOME. |
+| **Videos** | Titles, descriptions, collections, posters/thumbnails and available duration/format metadata; family recordings and other user-managed videos | Video player with seeking, fullscreen, volume, playback speed, supported subtitle/caption tracks and optional personal resume position. |
+| **Ebooks** | Titles, authors, series, edition/language, covers, available identifiers and personal/shared bookshelves; associate alternate formats with the same book | Reader for an initial documented format set, starting with EPUB and PDF; contents/chapter navigation, search, readable layout/font controls where supported, bookmarks and personal reading position. |
+| **Audiobooks** | Titles, authors, narrators, series, editions and covers; one book can comprise one file or an ordered set of parts, with chapter metadata where available | Book-oriented player with ordered part/chapter navigation, seek/skip, speed, sleep timer, bookmarks and personal listening position; retain the book queue while navigating HOME. |
+
+**Personal progress, including shared books.** Store reading/listening state separately from the shared book and
+its files, keyed by the authenticated user and a stable book edition/rendition identity. Each person has their own
+not-started/in-progress/finished state, last position, bookmarks and optional private notes. Reading a shared book
+requires view access to it, not permission to edit the library or original. Saving progress never writes into the
+ebook/audio file or changes another person's position, including when the source is read-only.
+
+Use a stable document location for reflowable ebooks, a page/location for fixed-layout documents, and a part or
+chapter plus time offset for audiobooks. Percentage is a derived convenience, not the sole resume locator. Preserve
+progress across authorized devices, renames and storage moves that retain identity. Use revision/conflict handling
+so an older device update does not silently overwrite a newer position; deliberate rereading, resetting or seeking
+backwards remains possible. If the content/edition changes, retain the old locator and reconcile or ask where to
+resume instead of silently applying it to unrelated content.
+
+Related ebook and audiobook editions can be linked in the catalog, but their positions remain separate unless a
+reliable cross-format mapping is introduced later. Library owners and household organizers do not inherit access
+to a person's progress or notes. A learner can explicitly share a reading result or selected notes with School;
+shared-library membership never creates automatic reading reports. Removing book access blocks reading/playback
+without making retained personal progress a route back to the content. Users can clear their own progress/history.
+
+Use phone-friendly controls and accessible keyboard/label/caption support, with terminal alternatives for library
+browsing, metadata and resource links. Start with direct playback of supported formats/codecs and explain when a
+file cannot be played on the current client. A file extension such as `.mp4` is not a promise that every encoding
+inside it can play. Preserve download/open-original access where authorized. Compatibility conversion, adaptive
+streaming and hardware-assisted transcoding can follow; importing a library must not require converting its files.
+
+**ResourceFacade is the storage boundary.** Media ingestion, catalog scanning, metadata extraction, previews,
+reading and playback access resources through `ResourceFacade` and its `ResourceReference`/provider contracts.
+Media must not implement separate filesystem, SQL/blob or git readers. Reuse existing facade operations and extend
+their API for the media-specific access needs below; keep those extensions available to other apps and components.
+Catalog records, collections, personal progress, access rules and source references live in the application
+database independently of where the original bytes are stored.
+
+**All four storage backends are initial scope**, with the same viewer/reader/player behavior and access rules:
+
+| Storage choice | Behavior and reuse |
+| --- | --- |
+| **Git on Postgres** | A `git://` resource backed by a database git repository, with trees/refs/history in Postgres and large media optionally stored through git LFS in Postgres content blobs. Configure relevant LFS patterns explicitly; facade reads resolve the actual content and revision. |
+| **Git on filesystem** | A `git://` resource backed by a local git repository, with git objects/history on disk and content served through the same facade API. Support binary content and transparent LFS resolution when enabled. Show the actual LFS payload location separately from the repository location; a fully disk-backed git/LFS choice needs filesystem LFS payload support in the framework. |
+| **DbResource** | `dbresource://` files with their existing file history and content-blob handling for large objects. Store media in Postgres without requiring git or LFS; use the facade's streaming/version behavior. |
+| **Plain local filesystem** | An authorized `file://` directory, including an existing mounted filesystem location, indexed in place. Large MP4s, books, music and photos remain ordinary files; no git repository or copy into Postgres is required. Support read-only and explicitly writable sources. A missing mount marks the source unavailable, without deleting catalog records or originals. |
+
+A household might keep family photos in Postgres git/LFS and its video collection in a disk directory. Media should
+present the same library and playback concepts across all four backends. Source settings show actual storage and
+write policy; registering a disk root is a trusted operator action, after which authorized users choose among available
+sources without receiving arbitrary filesystem access. Git on filesystem and plain local filesystem remain distinct
+choices, as do database-backed git and DbResource.
+
+Existing [drive services](../../../../docs/data/Revision-Management.md#drives) accept privileged root locations,
+while their ordinary folder option defaults to database resources. Existing
+[git/LFS services](../../../../docs/interfaces/Git-Hosting.md#large-files-git-lfs) store LFS payloads as content blobs.
+That currently places LFS payloads in Postgres even for a filesystem git repository; do not label that arrangement
+as entirely on disk. Correct this through the framework's LFS/provider storage, defaulting payload placement to the
+repository backend and making any override explicit; track the fix in
+[Remaining work: Git and git hosting](../../../../plans/Remaining-Work.md#git-and-git-hosting).
+No pre-release data migration is required; the data model becomes stable at the first release.
+The existing primitives do not yet supply the complete Media workflow or the expanded facade contract. Design
+source registration and indexing explicitly, including root confinement, symlink handling and source access on
+each serving node.
+
+**ResourceFacade API extensions.** Detailed method names remain to be designed; the required contract is:
+
+| Need | Shared facade/provider behavior |
+| --- | --- |
+| Resource description and capabilities | Length, content type, stable identity/revision or change validator, availability, and supported read/seek/write/version operations without reading the entire object. LFS size/type describe the resolved content. |
+| Bounded streaming and seeking | Open a stream or byte window at an offset, with independent readers, cancellation and bounded memory. Resolve git/LFS, DbResource blobs and filesystem files behind one API. Extend providers for efficient partial access; any necessary spooling/caching belongs behind the facade and is bounded and reusable, not repeated whole-file loads in Media. |
+| Consistent reads and delivery | Pin or validate the content revision across reader requests and seeks; detect changed content rather than mixing versions. HTTP adapters translate these operations into HEAD/GET, ranges and conditional responses with appropriate lengths and validators. Authorization remains mandatory before serving each request. |
+| Compound books and related resources | Resolve authorized ebook package members, images/styles, audiobook parts, chapter data, covers and subtitle files through the same resource contract. Constrain resolution to the approved item/package; resource names cannot escape into unrelated files. Ebook presentation must isolate active content and external requests. |
+| Processing and derived content | Metadata probes, thumbnails, covers and optional conversions consume facade streams or controlled seekable handles. If a decoder requires a local file, the framework manages a scoped temporary handle. Derived content is keyed to source revision and has its own storage/cleanup policy; no app-specific bypass to raw database blobs or disk paths. |
+
+ResourceFacade abstracts byte access and provider capabilities; media-format interpretation belongs in reusable
+framework media services, while catalog and personal-progress rules remain domain services. Neither a resource
+URI nor a capability flag grants access. Shared Media/drive authorization resolves the permitted resource and
+revision before invoking the facade, and related resources inherit that checked scope.
+
+**Library ingestion and maintenance.** Offer upload/import into a chosen managed source and “Add existing folder”
+for indexing in place. Scan through the facade for supported media, extract available metadata, generate
+thumbnails/posters/book covers and allow manual corrections without rewriting originals by default. Keep a stable
+media ID, source/path and content revision
+or fingerprint so a rename, rescan or changed file can be reconciled and derived previews refreshed. Flag possible
+duplicates for review; do not silently merge ownership or delete duplicate files. Catalog changes and file changes
+need a shared reconciliation path whether made through Media, Files, git or directly on disk.
+
+Scanning and metadata/preview jobs run in bounded batches, can be retried and report failures by file while
+continuing with independent items. A temporarily missing file is marked missing; permanent removal is a separate
+decision. Distinguish removing an item from an album, removing it from the library, trashing a writable original
+and permanently deleting content. Git history and LFS retention still apply; removing a visible item is not a
+promise that its historical bytes were erased.
+
+**Large files and reading/playback delivery.** Reuse and extend the framework's streamed responses and byte-range
+support over ResourceFacade; read only the needed portions instead of loading a whole movie or book into application
+memory. Serve resolved content on every backend, never an LFS pointer. Check each request's access, content type,
+range and revision; thumbnails, covers, ebook members, audiobook parts, subtitle files and variants follow the same
+scope.
+Confirm the current upload/LFS size limits against the intended media sizes, and design configurable limits and
+resumable large uploads where needed. Indexing existing disk media must not depend on an upload-size allowance.
+
+Keep originals separate from reproducible thumbnails, extracted metadata and optional playback variants. Cache
+derived content by source revision and processing settings, with quotas and cleanup; never expose cache paths as
+an authorization shortcut. Use the same reader/player/viewer primitives from record attachments or School resource
+links when useful, while Media owns its library-oriented screens.
+
+**Sharing and privacy.** Media and the underlying resources must have one effective access policy. A share grants
+only the selected item/collection and permitted actions, not access to an entire drive or git repository. Repository
+clone access includes history and must not be granted merely to view an album. Equally, Files, DAV, git or a direct
+stream URL must not bypass a restriction that Media claims to enforce. Recheck grants for playback/downloads and
+new range requests after revocation. Explain that a recipient's already downloaded copy cannot be recalled.
+
+Titles, search results, thumbnails and embedded metadata can be sensitive too. Make location/camera metadata
+disclosure a deliberate sharing/export choice while retaining the original. Reading/listening/viewing history and
+resume state are personal, optional convenience data, not household monitoring reports. Children can organize their own
+media and enjoy selected shared libraries within their configured access; access administration does not expose
+private libraries or generate activity reports. Face recognition and AI media analysis are not initial requirements,
+and an album share does not automatically authorize sending its content to an AI provider.
+
+**Ownership and follow-up work.** Reuse ResourceFacade, drive/share rules, git/LFS, DbResource, streaming, image
+tools, jobs and search. The facade/provider extensions, media-format services and viewer/reader/player widgets
+belong in the framework; shared library/catalog and personal-progress records/services follow Mantle's ownership
+rules; HOME supplies the Media app and household workflows. Backups must cover the catalog, personal progress,
+original bytes and versions in each configured source, including the actual LFS payload store. Disk sources require
+their own backup; database-backed git, DbResource and Postgres content blobs are covered by the database backup.
+Changing storage later should use facade copy/verify/relink operations preserving media/book IDs, collections and
+personal progress, with source deletion a separate choice.
+
+Later work can add automatic phone/camera uploads, richer photo organization/editing, metadata-provider
+integrations, casting, offline media and transcoding. The initial app scope includes photos, music, videos, ebooks
+and audiobooks, their viewers/readers/players, personal progress even in shared libraries, personal/shared access
+and all four required storage backends through ResourceFacade.
+
+### 3.3 Projects and personal tasks
 
 Keep the strengths of Projects: work breakdown, assignments, due dates, milestones, boards, timelines, documents
 and discussion. A kitchen renovation can be a substantial project; a birthday party can be a short checklist.
@@ -144,7 +300,7 @@ Chores, School work and project tasks appear together in Today, with one identit
 Home & Auto owns chore schedules and completion rules; School owns learning plans and any explicitly required
 assignment review. Appearing in another app's view never creates a second completion record.
 
-### 3.3 School: schoolwork at home and basic homeschooling
+### 3.4 School: schoolwork at home and basic homeschooling
 
 **School is a standalone HOME app**, with its own launcher entry, access grant, landing page and settings. It
 supports both work brought home from a school and learning organized at home using established curricula, books
@@ -230,7 +386,7 @@ systems are outside this HOME plan. A future education-focused **Ensuite** varia
 scope and share appropriate foundations. School supplies the basic planning, organization and recordkeeping needed
 to use established curricula and, where applicable, external courseware; it does not depend on that future suite.
 
-### 3.4 Home & Auto: care, chores and repairs
+### 3.5 Home & Auto: care, chores and repairs
 
 Organize around actual places and things: a home and its rooms, yard, appliances, tools, bicycles and vehicles.
 Keep purchase/warranty details, manuals, service contacts, photographs, maintenance history and related receipts.
@@ -258,7 +414,7 @@ Parts and supplies are optional tracking. A receipt can link to Money without re
 renovation can link to Projects without creating a second set of repair records. An allowance or reward, if wanted,
 is an explicit household choice and Money action, not an automatic payroll consequence of finishing a chore.
 
-### 3.5 Kitchen: meals first, inventory when useful
+### 3.6 Kitchen: meals first, inventory when useful
 
 The core flow is **save a recipe → plan meals → build a shared shopping list → shop → cook**. It must work without
 counting everything in the pantry. Recipes have ingredients, quantities/units, servings, steps, notes and source
@@ -287,7 +443,7 @@ Grocy demonstrates the useful connection between stock, recipes, shopping and ch
 recipe/meal/list workflow and separate household meal plans. These are interaction references, not proposed runtime
 dependencies. [Grocy features](https://grocy.info/), [Mealie documentation](https://mealie.io/).
 
-### 3.6 Money: simple entries over reliable financial records
+### 3.7 Money: simple entries over reliable financial records
 
 Present personal finance as a **single-entry, cash-based experience**: choose an account, enter money in or out,
 the date, person/store, category, amount and optional receipt. Support transfers, split categories, recurring
@@ -322,7 +478,7 @@ HOME does not initially add tax preparation, investment trading, business payrol
 Those who need business accounting use BOSS for the business organization. Live bank connections and expanded debt
 or investment tracking can be evaluated after manual entry and statement imports are useful.
 
-### 3.7 Household: membership and everyday administration
+### 3.8 Household: membership and everyday administration
 
 Create the household, add people, create or associate their accounts, choose app access, and establish shared
 calendars, folders and rooms. A person can exist as a contact without a login; an invitation can attach to an
@@ -424,9 +580,10 @@ Public publication, if later wanted, should be considered alongside PASS rather 
 ### 5.1 First scope: a personal cloud
 
 “Home lab” initially means the self-hosted digital environment already established or planned in MR Moqui:
-files and sharing, calendars and contacts, notes and documents, mail, chat and calls, sync clients, and optional git.
-The daily applications remain Commons and Comms; Home Lab provides a useful entry point, setup/status views and
-operator tools for that same environment. It does not create another file store, messaging service or calendar.
+files and sharing, personal/shared media, calendars and contacts, notes and documents, mail, chat and calls, sync
+clients, and optional git. The daily applications are Commons, Comms and Media; Home Lab provides a useful entry
+point, setup/status views and operator tools for that same environment. It does not create another file store,
+messaging service or calendar.
 
 Nextcloud's home offering groups files, communication, groupware and office collaboration into a personal-cloud
 experience. That is the reference scope, not a promise of Nextcloud app, client or API compatibility.
@@ -435,16 +592,18 @@ experience. That is the reference scope, not a promise of Nextcloud app, client 
 | Capability | Initial HOME treatment |
 | --- | --- |
 | Files, notes, calendars and contacts | Reuse the existing apps and shared records with household-oriented setup and sharing. |
+| Photos, music, videos, ebooks and audiobooks | Media owns libraries and viewer/reader/player screens, with personal book progress even in shared libraries. ResourceFacade supports git on Postgres, git on filesystem, DbResource and plain local filesystem; show actual source/payload placement, readiness, usage and backup coverage. |
 | Phone/desktop access | Explain supported DAV/SFTP clients and per-device app passwords, with address and revocation tools. Respect current limits such as shared CardDAV books being read-only and the documented CalDAV limitations. |
 | Office documents | Retain the planned WOPI/external-editor direction from [BOSS initial design](../../mr-boss/plan/initial-design.md). Verify the available integration before promising in-browser office editing; files and native collaborative notes are independently useful. |
 | Email, chat and calls | Use configured framework services; existing-provider email first is a valid household setup. Hosted mail, relay/gateway and call networking remain deployment choices. |
 | Services and technical projects | Useful service links, setup information and authorized health; optional git repositories and documentation through Projects/Commons. No new hypervisor, container orchestrator or general remote administration product. |
-| Storage, backups and recovery | Show actual supported status, failures and recovery instructions through shared operational tools. Account for the database, filesystem-backed drives/git, configuration and required keys; a database backup alone is not every deployment's complete recovery plan. External editor/services have their own backup needs. |
+| Storage, backups and recovery | Show actual supported status, failures and recovery instructions through shared operational tools. Account for the database (catalog/progress, git, DbResource and content blobs kept there), filesystem git and LFS payloads, plain media directories, configuration and required keys; a database backup alone is not every deployment's complete recovery plan. External editor/services have their own backup needs. |
 
 Use the existing [deployment guidance](../../../../docs/Run-Deploy.md) and
 [monitoring tools](../../../../docs/tools/Monitoring.md). Keep service installation, listeners and protocol
 configuration in their framework/deployment owners. Household members need not see these details to use their apps.
-True offline editing and background phone photo backup are separately scoped work, not implied by WebDAV support.
+True offline editing and Media's later background phone photo backup are separate capabilities, not implied by
+WebDAV support.
 
 ### 5.2 Home automation is future research
 
@@ -558,15 +717,19 @@ design and identify which shared dependencies are built, need extension or remai
 | Stage | Deliverable | Completion example |
 | --- | --- | --- |
 | **H0: access and shared foundation** | HOME roots and context, Jones Household and consulting fixtures, scoped membership/capability model, explicit Commons/Comms root access, HOME-aware shared links; child autonomy/privacy defaults and Assist policy contract | A HOME-only user cannot discover or open BOSS apps; David can use both organizations without records or form writes crossing contexts; a child account has no route to unrestricted Assist. |
-| **H1: household personal cloud** | Today, essential Household setup, Commons/Comms mounts, basic sharing and Home Lab sync/setup information; the first curated Child Assist option when its controls are ready | Household members share a calendar, folder and conversation; a relative sees only shared items; a child's personal note and AI conversation are not automatically exposed to an organizer. |
+| **H1a: household personal cloud** | Today, essential Household setup, Commons/Comms mounts, basic sharing and Home Lab sync/setup information; the first curated Child Assist option when its controls are ready | Household members share a calendar, folder and conversation; a relative sees only shared items; a child's personal note and AI conversation are not automatically exposed to an organizer. |
+| **H1b: Media** | Photo/music/video/ebook/audiobook libraries and viewers/readers/players; personal/shared collections and per-user book progress; ResourceFacade media APIs, source setup and indexing on all four backends | People read/listen to the same shared book with independent progress, browse photos and play music/video; equivalent facade-backed reading/seek behavior works on Postgres git, filesystem git, DbResource and plain local files. |
 | **H2a: work around the home** | Projects plus Home & Auto's belongings, self-managed chores and repair tracking | A child plans and completes ordinary work independently and can ask for help; explicitly chosen review works; a repair retains its manual and history. |
 | **H2b: School** | Standalone School app, homework organization, basic curriculum outlines and learner plans, wiki/resource links, weekly planning and requirement/portfolio records | A household plans a term using an external curriculum, links wiki guides and Wikipedia/resource pages, tracks each learner's work and exports selected homeschool records; a homework-only learner starts without curriculum setup. |
 | **H3: kitchen** | Recipes, weekly meals and shared shopping first; optional pantry tracking next | A household plans meals, combines ingredient needs, shops from phones and records leftovers without configuring inventory accounting. |
 | **H4: money** | Household cash/bank entry, categories, imports and reconciliation; then cards, budgets and cross-app receipt links | A grocery purchase is entered once, matched to a statement and linked to its receipt; an account transfer is excluded from spending; business records remain separate. |
-| **H5: deepen the shared capabilities** | Richer preventive care, vehicle usage intervals, optional advanced projects, office integration, selected learning-platform adapters and improved Home Lab operations as shared foundations mature | Household use drives improvements shared with BOSS, with a documented dependency and acceptance scenario for each addition. |
+| **H5: deepen the shared capabilities** | Richer preventive care, vehicle usage intervals, optional advanced projects, office integration, selected learning-platform adapters, Media camera uploads/transcoding and improved Home Lab operations as shared foundations mature | Household use drives improvements shared with BOSS, with a documented dependency and acceptance scenario for each addition. |
 
-H2a and H2b can proceed independently once their shared foundations are ready; H3 and H4 can change order after
-review. School's basic curriculum planner belongs in its initial delivery, while platform integrations come later.
+H1b builds on the shared access/resource foundation; its five media types, personal book progress, ResourceFacade
+extensions and all four storage choices are initial scope, independent of later camera uploads or transcoding.
+H2a and H2b can proceed independently once their shared
+foundations are ready; H3 and H4 can change order after review. School's basic curriculum planner belongs in its
+initial delivery, while platform integrations come later.
 Complete maintenance procedures and preventive scheduling depend on the shared Maintenance work; H2a should remain
 useful with basic tasks and repair history. Home Assistant/device work has its own later research track, outside
 these stages.
@@ -593,6 +756,22 @@ in Today; and a household exporting only its selected requirement records and po
 outline must preserve completed work's context. Direct resource links must work without a platform connector or AI,
 and an export must not pull in private learner notes or conversations.
 
+Media acceptance cases cover the same facade contract on git/Postgres, git/filesystem, DbResource and plain local
+filesystem, including LFS resolution and the configured payload placement. Cover personal/shared libraries, photo
+browsing without a Commons grant, music queues/playlists, video playback/seek, ebook navigation and multi-part
+audiobook playback with bounded memory. Verify that a subset share exposes neither neighboring files nor repository
+history, and that revoked access also blocks new original/thumbnail/range requests. A corrupt file must not stop an independent
+scan item; an unavailable directory must not delete the catalog. Test rescan/rename, read-only sources, collection
+removal versus original deletion, backup coverage and clear unsupported-format states. Exercise ordinary cases
+with small fixtures; run a specific large-file or long-playback scenario only with explicit permission if it is slow.
+
+Two users reading/listening to a shared book must retain independent positions, bookmarks and completion states,
+including on read-only sources. Check personal progress across devices, deliberate resets, stale updates, storage
+moves and changed editions; library managers must not see it without a separate explicit share. Verify that ebook
+package members cannot escape their scope, a seek cannot mix content revisions, and revocation blocks content
+even when the user's progress record remains. Run these backend cases through ResourceFacade rather than testing
+only storage-specific helpers.
+
 Implementation follows the repository's fast-spec practices. Slow scenarios are only run when their specific
 output is needed and the user explicitly authorizes them; they are not a routine coverage step. This document-only
 draft requires no build or application test run.
@@ -601,9 +780,9 @@ draft requires no build or application test run.
 
 The following choices remain proposals rather than settled requirements:
 
-1. **Remaining app boundaries and names:** School is a separate app, as decided. Keep chores inside Home & Auto
-   or give them a dedicated launcher entry over the same records? Is Household best presented as an app or a
-   settings area?
+1. **Remaining app boundaries and names:** School and Media are separate apps, as decided. Keep chores inside
+   Home & Auto or give them a dedicated launcher entry over the same records? Is Household best presented as an
+   app or a settings area?
 2. **Home Lab navigation:** is a distinct personal-cloud/setup hub useful, or should its ordinary-member features
    live entirely in Commons settings with an operator-only Lab app?
 3. **Personal finance depth:** confirm the hidden balanced-ledger approach, card/spending versus cash-flow
@@ -623,12 +802,18 @@ The following choices remain proposals rather than settled requirements:
    should guide the first implementation? Which learning platforms matter most after wiki pages and direct links?
    The standalone app and basic curriculum manager are initial scope; courseware and broader education management
    remain a separate future project.
+9. **Media priorities:** which photo, music, video/subtitle, ebook and audiobook formats and devices should guide
+   the first viewer/reader/player checks? Which collections need each backend and which need write access? All five
+   media types, personal book progress and all four ResourceFacade backends are initial scope. Detailed API names,
+   reader format coverage and LFS payload configuration remain to design; richer editing, phone backup and
+   transcoding can be prioritized separately.
 
 ## 9. Research basis
 
 Local design and implementation references are linked at the relevant decisions above. They establish the reusable
 foundation, not an assertion that every proposed BOSS capability is complete. The current component sources were
-checked for the dependency chain, organization relationships, root grants and placeholder status.
+checked for the dependency chain, organization relationships, root grants, placeholder status and media's existing
+ResourceFacade/version, drive/root-location, DbResource, git/LFS content and streaming foundations.
 
 External research was limited to primary project sources, checked November 1, 2026: Nextcloud for the personal-cloud
 scope, Grocy and Mealie for household kitchen patterns, and Home Assistant's APIs for the future integration
