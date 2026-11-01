@@ -6,7 +6,7 @@ it is not a screen specification or a commitment to build every feature in the f
 ## 1. Purpose
 
 IronStone HOME (Home Organization-Mechanization Ensuite) helps people organize life at home: their shared digital
-space, photos/music/videos, ebooks and audiobooks, conversations, projects, schoolwork and homeschooling, chores,
+space, photos/music/videos, ebooks and audiobooks, maps and places, conversations, projects, schoolwork and homeschooling, chores,
 house and vehicles, kitchen, and money.
 It should be useful to one person, a family, or another household arrangement, with selected participation by
 extended family and friends.
@@ -64,6 +64,7 @@ The current sources distinguish working foundations from planned capabilities:
 | Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is also a draft with placeholder app screens. Delegated household administration must be implemented over the existing primitives. |
 | Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../docs/interfaces/Sync.md) and [Revision management](../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
 | Media storage and delivery | ResourceFacade/ResourceReference, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
+| Maps and geographic data | Existing basic Geo/GeoPoint tables, Mantle address/facility/asset coordinates and ResourceFacade streaming | The [framework Maps plan](../../../../plans/Maps.md) proposes the shared OpenLayers Tools app, local-map dialog, hosted/self-hosted basemaps, personal/global configuration and postal-code coordinate fallback. This is new work, not the existing dashboard geomap. |
 
 Reuse in three ways:
 
@@ -97,6 +98,7 @@ child-activity dashboard or a notification for every ordinary action.
 | --- | --- | --- |
 | **Commons** | Calendar, contacts, files, notes, household knowledge and personal tasks | Most Commons functionality: calendars and sharing, contact books, drives, versions, wiki, attachments, search and Today. Office editing uses the shared integration when available. |
 | **Media** | Personal and shared photos, music, videos, ebooks and audiobooks; libraries, albums, playlists, bookshelves, viewers/readers/players and personal reading/listening progress | ResourceFacade storage and media-access APIs, drive sharing, versions, image processing, search and streaming; new catalog and dedicated screens. Support git on Postgres, git on filesystem, DbResource and plain local filesystem. |
+| **Maps** | Full-screen browsing and search, personal/shared places, household facilities/assets, geographic file overlays and local-map dialogs beside addresses | Framework Tools Maps and its OpenLayers interface; OpenFreeMap hosted profile or self-hosted PMTiles through ResourceFacade, shared with BOSS/PASS. Basic Geo postal-code lookup and Mantle record adapters retain source and precision. |
 | **Comms** | Family and friend conversations, email, chat, calls and video | Most Comms functionality and its framework mail/chat/call services. Household rooms, selected contacts and family-oriented entry points replace business directory assumptions. |
 | **Projects** | Home improvements, trips, hobbies, events and personal projects | Projects and shared work items, boards, milestones, calendar views, checklists, documents and discussions. Optional code and time tools remain useful for homelab and learning projects. |
 | **School** | Schoolwork at home; homeschool subjects/curricula, learning plans, assignments, resources, portfolios and basic requirement records | Projects' shared work items and planning tools; Commons wiki, files, calendars and sharing. New curriculum/learner context organizes established external curricula and courseware, starting with direct resource links. |
@@ -502,6 +504,58 @@ second user database. Household managers may grant only capabilities within thei
 administrator access. Invitations, delegated grants and account recovery need to follow the shared Admin work as
 it becomes available; do not assume the draft invitation services already exist.
 
+### 3.9 Maps: places and geographic information
+
+Expose **Maps** in HOME using the framework-owned app in `base-component/tools`, with household context and
+permitted record layers. The same generic interface serves BOSS and potentially PASS and other components; HOME
+does not maintain a separate map engine, tile service or geographic database. The selected renderer is
+**OpenLayers**, whose formats, coordinate systems and GIS capabilities suit both business use and the likely HOME
+audience. The complete framework design and staged scope are in [Maps](../../../../plans/Maps.md).
+
+Initial household use includes:
+
+- **Browse and find places.** A full-screen map, configured place/address search, local postal-code lookup,
+  personal saved views and places, and explicitly shared household collections. Search also finds household
+  facilities/assets the person is allowed to see. Provide a readable results list and phone-friendly controls.
+- **See a place in context.** A shared **View map** dialog beside contact addresses, the home or another facility,
+  asset locations and other records with addresses/coordinates. It preserves the originating screen and offers
+  **Open in Maps**. Choosing/saving a location requires the source record's edit capability; browsing does not.
+- **Use geographic files.** Display GeoJSON places/boundaries, GPX walks and KML collections from permitted resources.
+  Keep the originals in Files and the map view in Maps. Additional GIS readers/services, projection controls,
+  raster imagery and editing can be exposed progressively through the shared framework work.
+- **Choose hosted or local maps.** Offer OpenFreeMap as an initial hosted profile, with attribution and its usage
+  terms. Self-hosted regional or worldwide PMTiles archives use ResourceFacade, including git on Postgres, git
+  on filesystem, DbResource and plain files. Package compatible styles/fonts/icons for fully local use.
+- **Keep personal preferences.** Installation policy and profiles establish available providers/layers; each user
+  can choose permitted defaults, units, extent and saved views. Personal places and recent-view state are not
+  automatically visible to household organizers. Household managers see delegated settings, not server secrets.
+
+**Postal areas are a useful fallback.** Use country and postal code with basic Geo data to place an address
+approximately when its exact coordinates are unknown. Initial downloadable sources are Census ZCTA representative
+points for the US and GeoNames country postal datasets, with other national/operator-provided sources supported by
+the same import contract. Research did not verify a current open USPS ZIP-coordinate download; USPS address
+standardization is a separate possible integration. Source/edition, code granularity and precision remain visible.
+An approximate postal-area marker uses a broad view and is never silently saved as the home's or asset's precise
+position. A household can use this fallback with all external requests disabled, then explicitly choose a better
+point or a configured address lookup. The [framework research](../../../../plans/Maps.md#62-sources-researched)
+records the dataset and provider limitations.
+
+**Cross-app use follows the source record's access.** Commons contacts, Home & Auto facilities/assets and suitable
+event or trip locations use the shared dialog. Later Media photo-location browsing can open Maps with only permitted
+photos and their existing location metadata; it does not publish a private library. School can link saved maps or
+geographic resources without turning map browsing into study-time or activity monitoring. A HOME-only user needs
+neither BOSS nor Monitor access, and a record dialog does not require the standalone Maps launcher grant.
+
+**Autonomy and safety apply to location too.** Children can independently explore enabled maps, save their own
+places and use shared household resources within their grants. Viewing a map does not request device location;
+**Locate me** is explicit and does not start tracking or save a history. No parent/organizer view of a child's map
+activity or location is created by default. Future **find my XYZ** requires separate device integrations, timestamped
+observations and visible, explicitly chosen sharing for people; it is not inferred from address or photo metadata.
+
+Maps and Media share the framework's bounded range reads, revision validation, storage configuration and LFS
+placement work. Full route planning, background location feeds, home-device control and Google/other external map
+integrations remain later capabilities with their own research and access design.
+
 ## 4. Accounts, organizations and sharing
 
 ### 4.1 Two independent organizations, one person's account
@@ -719,6 +773,7 @@ design and identify which shared dependencies are built, need extension or remai
 | **H0: access and shared foundation** | HOME roots and context, Jones Household and consulting fixtures, scoped membership/capability model, explicit Commons/Comms root access, HOME-aware shared links; child autonomy/privacy defaults and Assist policy contract | A HOME-only user cannot discover or open BOSS apps; David can use both organizations without records or form writes crossing contexts; a child account has no route to unrestricted Assist. |
 | **H1a: household personal cloud** | Today, essential Household setup, Commons/Comms mounts, basic sharing and Home Lab sync/setup information; the first curated Child Assist option when its controls are ready | Household members share a calendar, folder and conversation; a relative sees only shared items; a child's personal note and AI conversation are not automatically exposed to an organizer. |
 | **H1b: Media** | Photo/music/video/ebook/audiobook libraries and viewers/readers/players; personal/shared collections and per-user book progress; ResourceFacade media APIs, source setup and indexing on all four backends | People read/listen to the same shared book with independent progress, browse photos and play music/video; equivalent facade-backed reading/seek behavior works on Postgres git, filesystem git, DbResource and plain local files. |
+| **H1c: Maps** | Shared Tools Maps in HOME context: OpenLayers browser and record dialog, personal/shared places, basic file overlays, OpenFreeMap and ResourceFacade PMTiles, global/personal settings and local postal lookup | A HOME-only user opens a contact's local map, recognizes a postal-area estimate, chooses a permitted location, and browses a local archive with external requests disabled; consulting and private household records remain separate. |
 | **H2a: work around the home** | Projects plus Home & Auto's belongings, self-managed chores and repair tracking | A child plans and completes ordinary work independently and can ask for help; explicitly chosen review works; a repair retains its manual and history. |
 | **H2b: School** | Standalone School app, homework organization, basic curriculum outlines and learner plans, wiki/resource links, weekly planning and requirement/portfolio records | A household plans a term using an external curriculum, links wiki guides and Wikipedia/resource pages, tracks each learner's work and exports selected homeschool records; a homework-only learner starts without curriculum setup. |
 | **H3: kitchen** | Recipes, weekly meals and shared shopping first; optional pantry tracking next | A household plans meals, combines ingredient needs, shops from phones and records leftovers without configuring inventory accounting. |
@@ -727,6 +782,8 @@ design and identify which shared dependencies are built, need extension or remai
 
 H1b builds on the shared access/resource foundation; its five media types, personal book progress, ResourceFacade
 extensions and all four storage choices are initial scope, independent of later camera uploads or transcoding.
+H1c follows framework Maps P0–P3 and the same access/resource foundation; it can progress independently of Media's
+catalog and players. Exact address geocoding is optional: local postal lookup and manual selection keep Maps useful.
 H2a and H2b can proceed independently once their shared
 foundations are ready; H3 and H4 can change order after review. School's basic curriculum planner belongs in its
 initial delivery, while platform integrations come later.
@@ -772,6 +829,13 @@ package members cannot escape their scope, a seek cannot mix content revisions, 
 even when the user's progress record remains. Run these backend cases through ResourceFacade rather than testing
 only storage-specific helpers.
 
+Maps acceptance includes personal versus shared saved places, a private contact address, an approximate postal-code
+match, a missing/ambiguous match, and an explicit point selected without changing the mailing address. Check the
+same target in full-screen and dialog views, global/personal settings, no silent outbound address lookup, locally
+packaged styles/fonts, all four archive backends and revocation on later range requests. A child browsing Maps does
+not create a location/activity report for an adult. Use small geographic fixtures; the framework plan owns the
+shared HTTP, provider and reference-data checks.
+
 Implementation follows the repository's fast-spec practices. Slow scenarios are only run when their specific
 output is needed and the user explicitly authorizes them; they are not a routine coverage step. This document-only
 draft requires no build or application test run.
@@ -780,7 +844,7 @@ draft requires no build or application test run.
 
 The following choices remain proposals rather than settled requirements:
 
-1. **Remaining app boundaries and names:** School and Media are separate apps, as decided. Keep chores inside
+1. **Remaining app boundaries and names:** School, Media and Maps are separate apps, as decided. Keep chores inside
    Home & Auto or give them a dedicated launcher entry over the same records? Is Household best presented as an
    app or a settings area?
 2. **Home Lab navigation:** is a distinct personal-cloud/setup hub useful, or should its ordinary-member features
@@ -807,6 +871,9 @@ The following choices remain proposals rather than settled requirements:
    media types, personal book progress and all four ResourceFacade backends are initial scope. Detailed API names,
    reader format coverage and LFS payload configuration remain to design; richer editing, phone backup and
    transcoding can be prioritized separately.
+10. **Maps priorities:** which regions/countries, postal datasets and geographic imports should guide the first
+    profiles? OpenLayers, the shared Tools browser/dialog, OpenFreeMap and ResourceFacade PMTiles are decided;
+    selection of an optional full address/place search provider and richer GIS workflows remains open.
 
 ## 9. Research basis
 
@@ -818,3 +885,5 @@ ResourceFacade/version, drive/root-location, DbResource, git/LFS content and str
 External research was limited to primary project sources, checked November 1, 2026: Nextcloud for the personal-cloud
 scope, Grocy and Mealie for household kitchen patterns, and Home Assistant's APIs for the future integration
 question. These inform the proposal; none is a required dependency or a commitment to feature parity.
+The [Maps research and decisions](../../../../plans/Maps.md) add OpenLayers, hosted and downloadable basemaps,
+postal/geocoding sources and their limits; those named map dependencies are selected explicitly in §3.9.
