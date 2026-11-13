@@ -62,9 +62,9 @@ The current sources distinguish working foundations from planned capabilities:
 | Accounting | Banking, payments, reconciliation, budgets, reports and guarded ledger operations | The [Accounting implementation](../../mr-boss/plan/impl-accounting.md) records P0–P21 built. A personal-finance workflow and its posting policy still need design. |
 | Maintenance | Existing facilities, assets, work efforts, requests, equipment history and shared screens; a detailed maintenance design | [Maintenance](../../mr-boss/plan/design-maintenance.md) remains a draft, and its app has placeholder screens. Full preventive scheduling and procedure execution are dependencies to build, not finished functionality to rename. |
 | Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is also a draft with placeholder app screens. Delegated household administration must be implemented over the existing primitives. |
-| Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../docs/interfaces/Sync.md) and [Revision management](../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
-| Media storage and delivery | ResourceFacade/ResourceReference, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
-| Maps and geographic data | Existing basic Geo/GeoPoint tables, Mantle address/facility/asset coordinates and ResourceFacade streaming | The [framework Maps plan](../../../../plans/Maps.md) proposes the shared OpenLayers Tools app, local-map dialog, hosted/self-hosted basemaps, personal/global configuration and postal-code coordinate fallback. This is new work, not the existing dashboard geomap. |
+| Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../../docs/interfaces/Sync.md) and [Revision management](../../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
+| Media storage and delivery | ResourceFacade/ResourceReference, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
+| Maps and geographic data | Existing basic Geo/GeoPoint tables, Mantle address/facility/asset coordinates and ResourceFacade streaming | The [framework Maps plan](../../../../../plans/Maps.md) proposes the shared OpenLayers Tools app, local-map dialog, hosted/self-hosted basemaps, personal/global configuration and postal-code coordinate fallback. This is new work, not the existing dashboard geomap. |
 
 Reuse in three ways:
 
@@ -79,7 +79,7 @@ Reuse in three ways:
 
 Do not fork whole BOSS applications, add pass-through services merely to rename existing operations, or require a
 household to configure business modules to unlock a home task. These follow the
-[application development practices](../../../../docs/dev/Practices-App-Dev.md).
+[application development practices](../../../../../docs/dev/Practices-App-Dev.md).
 
 ## 3. Proposed initial application set
 
@@ -206,13 +206,13 @@ write policy; registering a disk root is a trusted operator action, after which 
 sources without receiving arbitrary filesystem access. Git on filesystem and plain local filesystem remain distinct
 choices, as do database-backed git and DbResource.
 
-Existing [drive services](../../../../docs/data/Revision-Management.md#drives) accept privileged root locations,
+Existing [drive services](../../../../../docs/data/Revision-Management.md#drives) accept privileged root locations,
 while their ordinary folder option defaults to database resources. Existing
-[git/LFS services](../../../../docs/interfaces/Git-Hosting.md#large-files-git-lfs) store LFS payloads as content blobs.
+[git/LFS services](../../../../../docs/interfaces/Git-Hosting.md#large-files-git-lfs) store LFS payloads as content blobs.
 That currently places LFS payloads in Postgres even for a filesystem git repository; do not label that arrangement
 as entirely on disk. Correct this through the framework's LFS/provider storage, defaulting payload placement to the
 repository backend and making any override explicit; track the fix in
-[Remaining work: Git and git hosting](../../../../plans/Remaining-Work.md#git-and-git-hosting).
+[Remaining work: Git and git hosting](../../../../../plans/Remaining-Work.md#git-and-git-hosting).
 No pre-release data migration is required; the data model becomes stable at the first release.
 The existing primitives do not yet supply the complete Media workflow or the expanded facade contract. Design
 source registration and indexing explicitly, including root confinement, symlink handling and source access on
@@ -506,11 +506,11 @@ it becomes available; do not assume the draft invitation services already exist.
 
 ### 3.9 Maps: places and geographic information
 
-Expose **Maps** in HOME using the framework-owned app in `base-component/tools`, with household context and
+Expose **Maps** in HOME using the framework-owned app in `components/base/tools`, with household context and
 permitted record layers. The same generic interface serves BOSS and potentially PASS and other components; HOME
 does not maintain a separate map engine, tile service or geographic database. The selected renderer is
 **OpenLayers**, whose formats, coordinate systems and GIS capabilities suit both business use and the likely HOME
-audience. The complete framework design and staged scope are in [Maps](../../../../plans/Maps.md).
+audience. The complete framework design and staged scope are in [Maps](../../../../../plans/Maps.md).
 
 Initial household use includes:
 
@@ -537,7 +537,7 @@ the same import contract. Research did not verify a current open USPS ZIP-coordi
 standardization is a separate possible integration. Source/edition, code granularity and precision remain visible.
 An approximate postal-area marker uses a broad view and is never silently saved as the home's or asset's precise
 position. A household can use this fallback with all external requests disabled, then explicitly choose a better
-point or a configured address lookup. The [framework research](../../../../plans/Maps.md#62-sources-researched)
+point or a configured address lookup. The [framework research](../../../../../plans/Maps.md#62-sources-researched)
 records the dataset and provider limitations.
 
 **Cross-app use follows the source record's access.** Commons contacts, Home & Auto facilities/assets and suitable
@@ -653,8 +653,8 @@ experience. That is the reference scope, not a promise of Nextcloud app, client 
 | Services and technical projects | Useful service links, setup information and authorized health; optional git repositories and documentation through Projects/Commons. No new hypervisor, container orchestrator or general remote administration product. |
 | Storage, backups and recovery | Show actual supported status, failures and recovery instructions through shared operational tools. Account for the database (catalog/progress, git, DbResource and content blobs kept there), filesystem git and LFS payloads, plain media directories, configuration and required keys; a database backup alone is not every deployment's complete recovery plan. External editor/services have their own backup needs. |
 
-Use the existing [deployment guidance](../../../../docs/Run-Deploy.md) and
-[monitoring tools](../../../../docs/tools/Monitoring.md). Keep service installation, listeners and protocol
+Use the existing [deployment guidance](../../../../../docs/Run-Deploy.md) and
+[monitoring tools](../../../../../docs/tools/Monitoring.md). Keep service installation, listeners and protocol
 configuration in their framework/deployment owners. Household members need not see these details to use their apps.
 True offline editing and Media's later background phone photo backup are separate capabilities, not implied by
 WebDAV support.
@@ -756,7 +756,7 @@ recipient and content first. Content safety processing is distinct from granting
 Any future automatic safeguarding notification needs a separately specified, narrow and transparent policy for
 its trigger, recipient and minimum necessary information; general conversation monitoring is not an initial feature.
 
-Reuse the [framework Assist](../../../../docs/ai/Assist.md) runtime, model selection, permissions, tool policies,
+Reuse the [framework Assist](../../../../../docs/ai/Assist.md) runtime, model selection, permissions, tool policies,
 approvals and audit mechanisms. Its documented separation between administration and transcript access
 (`AgentAudit`) matters here: household/Child Assist management must not automatically grant transcript-audit rights.
 The child profiles, curated catalog, content safeguards and consistent enforcement across entry points are **new
@@ -885,5 +885,5 @@ ResourceFacade/version, drive/root-location, DbResource, git/LFS content and str
 External research was limited to primary project sources, checked November 1, 2026: Nextcloud for the personal-cloud
 scope, Grocy and Mealie for household kitchen patterns, and Home Assistant's APIs for the future integration
 question. These inform the proposal; none is a required dependency or a commitment to feature parity.
-The [Maps research and decisions](../../../../plans/Maps.md) add OpenLayers, hosted and downloadable basemaps,
+The [Maps research and decisions](../../../../../plans/Maps.md) add OpenLayers, hosted and downloadable basemaps,
 postal/geocoding sources and their limits; those named map dependencies are selected explicitly in §3.9.
