@@ -1,5 +1,8 @@
 # IronStone HOME — Initial design
 
+November 18, 2026 — brought in line with BOSS as built since: Maintenance and Admin are built (§2), Admin's invitations
+exist (§3.8), and the Commons and Comms roots are granted to `BOSS_USERS`, not `ALL_USERS` (§4.2).
+
 November 1, 2026 — draft for discussion. This proposes the application set, shared foundations and delivery order;
 it is not a screen specification or a commitment to build every feature in the first release.
 
@@ -60,8 +63,8 @@ The current sources distinguish working foundations from planned capabilities:
 | Commons and Comms | Contacts, calendars, tasks, files/drives, notes/wiki, communication and the shared shell | Substantial implementation exists; use the [implementation record](../../mr-boss/plan/impl-drawers-commons.md) and current sources rather than treating every item in the original design as built. HOME mounts and access rules are new work. |
 | Projects | Projects, work items, boards, timelines, milestones, files, discussions, code repositories and optional time tracking | The [Projects implementation](../../mr-boss/plan/impl-projects.md) records P0–P11 built. HOME Projects and the separate School app can reuse its work-item foundation; School's curriculum planning and learner records are new work. |
 | Accounting | Banking, payments, reconciliation, budgets, reports and guarded ledger operations | The [Accounting implementation](../../mr-boss/plan/impl-accounting.md) records P0–P21 built. A personal-finance workflow and its posting policy still need design. |
-| Maintenance | Existing facilities, assets, work efforts, requests, equipment history and shared screens; a detailed maintenance design | [Maintenance](../../mr-boss/plan/design-maintenance.md) remains a draft, and its app has placeholder screens. Full preventive scheduling and procedure execution are dependencies to build, not finished functionality to rename. |
-| Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is also a draft with placeholder app screens. Delegated household administration must be implemented over the existing primitives. |
+| Maintenance | Existing facilities, assets, work efforts, requests, equipment history and shared screens; a detailed maintenance design | [Maintenance](../../mr-boss/plan/design-maintenance.md) is built, preventive plans and procedure execution included (the [Maintenance implementation](../../mr-boss/plan/impl-maintenance.md) records P0–P20). Household wording, chores and a household's own access to it are new work. |
+| Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is built (the [Admin implementation](../../mr-boss/plan/impl-admin.md) records P1–P19), with its generic screens now the framework's System screens. Delegated household administration is new work over it. |
 | Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../../docs/interfaces/Sync.md) and [Revision management](../../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
 | Media storage and delivery | ResourceFacade/ResourceReference, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
 | Maps and geographic data | Existing basic Geo/GeoPoint tables, Mantle address/facility/asset coordinates and ResourceFacade streaming | The [framework Maps plan](../../../../../plans/Maps.md) proposes the shared OpenLayers Tools app, local-map dialog, hosted/self-hosted basemaps, personal/global configuration and postal-code coordinate fallback. This is new work, not the existing dashboard geomap. |
@@ -501,8 +504,8 @@ child in conversation reporting. Changes to access, sharing and Assist options a
 Initial settings include household name, locale, time zone, currency and units, available apps, notification
 preferences and sharing choices. Reuse the shared account lifecycle and settings owners rather than creating a
 second user database. Household managers may grant only capabilities within their delegated scope, not framework
-administrator access. Invitations, delegated grants and account recovery need to follow the shared Admin work as
-it becomes available; do not assume the draft invitation services already exist.
+administrator access. Invitations, delegated grants and account recovery follow the shared Admin work:
+Admin's staff invitations and account lifecycle are built; a household invitation and a manager's delegated grants are new work over them.
 
 ### 3.9 Maps: places and geographic information
 
@@ -592,11 +595,11 @@ Use HOME app-root grants and permission bundles, without granting the correspond
 screen or service. Domain services check the action, organization and record/share scope independently of the
 mounting app. A HOME context can change labels and available features; it cannot confer authority.
 
-**Known prerequisite:** [BossSetupData.xml](../../mr-boss/data/BossSetupData.xml) currently grants both
-`BOSS_COMMONS` and `BOSS_COMMS` roots to `ALL_USERS`. Simply withholding other BOSS groups will therefore not satisfy
-HOME-only access. Plan explicit opt-in BOSS root grants and HOME root grants, with a migration preserving intended
-access for existing BOSS users. Update shared header/tray routes, record links, palette and quick-create providers
-to resolve through authorized mounts. Avoid a blanket HOME-user deny that would also block someone using both suites.
+**Root grants:** [BossSetupData.xml](../../mr-boss/data/BossSetupData.xml) grants the `BOSS_COMMONS` and `BOSS_COMMS`
+roots to `BOSS_USERS`, the group of a business's internal users, and nothing to `ALL_USERS`. A HOME-only account is
+not in `BOSS_USERS`, so it gets no BOSS root; what remains is HOME's own root grants. Update shared header/tray
+routes, record links, palette and quick-create providers to resolve through authorized mounts. Avoid a blanket
+HOME-user deny that would also block someone using both suites.
 
 Review broad existing service permissions and organization filters as part of that work. Global permissions alone
 do not express “manage this household's money but not this business's books,” and some existing administrator paths
