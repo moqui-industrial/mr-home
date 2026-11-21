@@ -595,7 +595,7 @@ Use HOME app-root grants and permission bundles, without granting the correspond
 screen or service. Domain services check the action, organization and record/share scope independently of the
 mounting app. A HOME context can change labels and available features; it cannot confer authority.
 
-**Root grants:** [BossSetupData.xml](../../mr-boss/data/BossSetupData.xml) grants the `BOSS_COMMONS` and `BOSS_COMMS`
+**Root grants:** [BossSetupData01GroupsAndLaunchers.xml](../../mr-boss/data/BossSetupData01GroupsAndLaunchers.xml) grants the `BOSS_COMMONS` and `BOSS_COMMS`
 roots to `BOSS_USERS`, the group of a business's internal users, and nothing to `ALL_USERS`. A HOME-only account is
 not in `BOSS_USERS`, so it gets no BOSS root; what remains is HOME's own root grants. Update shared header/tray
 routes, record links, palette and quick-create providers to resolve through authorized mounts. Avoid a blanket
