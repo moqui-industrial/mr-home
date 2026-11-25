@@ -66,7 +66,7 @@ The current sources distinguish working foundations from planned capabilities:
 | Maintenance | Existing facilities, assets, work efforts, requests, equipment history and shared screens; a detailed maintenance design | [Maintenance](../../mr-boss/plan/design-maintenance.md) is built, preventive plans and procedure execution included (the [Maintenance implementation](../../mr-boss/plan/impl-maintenance.md) records P0–P20). Household wording, chores and a household's own access to it are new work. |
 | Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is built (the [Admin implementation](../../mr-boss/plan/impl-admin.md) records P1–P19), with its generic screens now the framework's System screens. Delegated household administration is new work over it. |
 | Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../../docs/interfaces/Sync.md) and [Revision management](../../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
-| Media storage and delivery | ResourceFacade/ResourceReference, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
+| Media storage and delivery | ResourceFacade/`ResourceRef`, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
 | Maps and geographic data | Existing basic Geo/GeoPoint tables, Mantle address/facility/asset coordinates and ResourceFacade streaming | The [framework Maps plan](../../../../../plans/Maps.md) proposes the shared OpenLayers Tools app, local-map dialog, hosted/self-hosted basemaps, personal/global configuration and postal-code coordinate fallback. This is new work, not the existing dashboard geomap. |
 
 Reuse in three ways:
@@ -188,7 +188,7 @@ inside it can play. Preserve download/open-original access where authorized. Com
 streaming and hardware-assisted transcoding can follow; importing a library must not require converting its files.
 
 **ResourceFacade is the storage boundary.** Media ingestion, catalog scanning, metadata extraction, previews,
-reading and playback access resources through `ResourceFacade` and its `ResourceReference`/provider contracts.
+reading and playback access resources through `ResourceFacade` and its `ResourceRef`/provider contracts.
 Media must not implement separate filesystem, SQL/blob or git readers. Reuse existing facade operations and extend
 their API for the media-specific access needs below; keep those extensions available to other apps and components.
 Catalog records, collections, personal progress, access rules and source references live in the application
@@ -221,7 +221,13 @@ The existing primitives do not yet supply the complete Media workflow or the exp
 source registration and indexing explicitly, including root confinement, symlink handling and source access on
 each serving node.
 
-**ResourceFacade API extensions.** Detailed method names remain to be designed; the required contract is:
+**ResourceFacade API extensions.** Detailed method names remain to be designed; the required contract is below.
+Its byte-access part (description, bounded seeking, pinned revisions, ranged and conditional HTTP responses) is
+framework work with one owner,
+[framework Maps §5](../../../../../plans/Maps.md#5-resourcefacade-and-tile-streaming), as its stage R: that
+section lists what is built (`ByteSource` behind `ResourceFacade::open`, one ranged response path) and what remains
+for each of the four backends, and whichever of Media and Maps starts first builds it there. Media adds only what
+is its own: related resources and processing handles.
 
 | Need | Shared facade/provider behavior |
 | --- | --- |
@@ -785,6 +791,7 @@ design and identify which shared dependencies are built, need extension or remai
 
 H1b builds on the shared access/resource foundation; its five media types, personal book progress, ResourceFacade
 extensions and all four storage choices are initial scope, independent of later camera uploads or transcoding.
+The byte access under those extensions is framework Maps stage R (§3.2), shared with H1c.
 H1c follows framework Maps P0–P3 and the same access/resource foundation; it can progress independently of Media's
 catalog and players. Exact address geocoding is optional: local postal lookup and manual selection keep Maps useful.
 H2a and H2b can proceed independently once their shared
