@@ -1,5 +1,9 @@
 # IronStone HOME — Initial design
 
+November 25, 2026 — framework Maps is built through its P3 (§2). §3.9 now says what HOME builds over it when it has
+screens: the LocalMap mount, HOME's adapters, their access, and household and business layers kept apart. §7 names the
+two visibility walks HOME writes.
+
 November 18, 2026 — brought in line with BOSS as built since: Maintenance and Admin are built (§2), Admin's invitations
 exist (§3.8), and the Commons and Comms roots are granted to `BOSS_USERS`, not `ALL_USERS` (§4.2).
 
@@ -67,7 +71,7 @@ The current sources distinguish working foundations from planned capabilities:
 | Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is built (the [Admin implementation](../../mr-boss/plan/impl-admin.md) records P1–P19), with its generic screens now the framework's System screens. Delegated household administration is new work over it. |
 | Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../../docs/interfaces/Sync.md) and [Revision management](../../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
 | Media storage and delivery | ResourceFacade/`ResourceRef`, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
-| Maps and geographic data | Existing basic Geo/GeoPoint tables, Mantle address/facility/asset coordinates and ResourceFacade streaming | The [framework Maps plan](../../../../../plans/Maps.md) proposes the shared OpenLayers Tools app, local-map dialog, hosted/self-hosted basemaps, personal/global configuration and postal-code coordinate fallback. This is new work, not the existing dashboard geomap. |
+| Maps and geographic data | The Tools Maps app and local-map dialog, Geo data and postal lookup, Mantle's record adapters and ResourceFacade range streaming | [Framework Maps](../../../../../docs/tools/Maps.md) is built through P3 of [its plan](../../../../../plans/Maps.md): the OpenLayers browser and dialog, hosted and self-hosted basemaps, personal/global configuration, overlays and saved places, the postal-code fallback and Mantle's adapters ([MapAdapters](../../mr-mantle/docs/MapAdapters.md)). HOME's mount, adapters and walks are new work (§3.9). |
 
 Reuse in three ways:
 
@@ -519,7 +523,8 @@ Expose **Maps** in HOME using the framework-owned app in `components/base/tools`
 permitted record layers. The same generic interface serves BOSS and potentially PASS and other components; HOME
 does not maintain a separate map engine, tile service or geographic database. The selected renderer is
 **OpenLayers**, whose formats, coordinate systems and GIS capabilities suit both business use and the likely HOME
-audience. The complete framework design and staged scope are in [Maps](../../../../../plans/Maps.md).
+audience. The complete framework design and staged scope are in [Maps](../../../../../plans/Maps.md), and what is
+built in the [Maps guide](../../../../../docs/tools/Maps.md).
 
 Initial household use includes:
 
@@ -564,6 +569,114 @@ observations and visible, explicitly chosen sharing for people; it is not inferr
 Maps and Media share the framework's bounded range reads, revision validation, storage configuration and LFS
 placement work. Full route planning, background location feeds, home-device control and Google/other external map
 integrations remain later capabilities with their own research and access design.
+
+**What HOME builds over the framework.** Framework Maps is built through its P3
+([Maps §9](../../../../../plans/Maps.md#9-delivery-and-acceptance)); the BOSS mount is the precedent
+([BOSS §3.32](../../mr-boss/plan/design-crosscut.md#332-maps-and-record-location-dialogs),
+[`Shared/LocalMap.xml`](../../mr-boss/screen/Shared/LocalMap.xml)). HOME reuses these, with the framework and Mantle
+changes named below, and adds no map entity, engine or configuration screen:
+
+- The framework app's Browse, Saved views and Preferences, and its LocalMap dialog.
+- Saved places (`Maps/places.geojson`) and GeoJSON, GPX and KML overlays, such as a GPX walk or KML places, kept in the
+  person's own drive and private until shared. A household collection is such a file in a household drive or shared
+  in Files (`ResourceShare`), which is the only access model
+  ([Overlays and places](../../../../../docs/tools/Maps.md#overlays-and-places)).
+- The local postal lookup and its approximate postal-area fallback
+  ([Postal lookup](../../../../../docs/tools/Maps.md#postal-lookup)), over Geo data the server operator imports.
+- Regional PMTiles archives the operator registers, with the packaged local Protomaps profile, for maps that make no
+  outside request ([Archives](../../../../../docs/tools/Maps.md#archives)). An archive only the household may read
+  goes in a household drive or has a `viewPermission`.
+- The geocoder, off by default: the Census geocoder is seeded disabled, nothing is sent while
+  `maps@external-requests` is false, and enabling one is the operator's choice
+  ([Address and place search](../../../../../docs/tools/Maps.md#address-and-place-search)).
+- Mantle's adapters `postalAddress`, `party`, `facility` and `asset` for every record dialog, with their own access
+  checks and guarded saves ([MapAdapters](../../mr-mantle/docs/MapAdapters.md)).
+
+Maps › Configuration stays the operator's (`MAPS_ADMIN`). Home Lab links to it and shows its readiness
+(`maps.geodata`, `maps.archives`); a household organizer gets no Maps administration.
+
+**The mount.** Each HOME app root with a **View map** (Commons for contact addresses, Home & Auto for its places and
+belongings, Projects for an event or trip address, Media for a photo) mounts a HOME screen, hidden, as its `LocalMap`
+subscreen by the [thin-wrapper rule](../../../../../docs/tools/Maps.md#under-an-apps-route), as BOSS does:
+`include-screen` of the framework's LocalMap, with `transition-include` of `getConfig` and, where Choose location is
+offered, `storeLocation`. It takes in no `source`: the framework's own map-source route serves the archives and checks
+every caller. The HOME root's own grant reaches the mount. No grant names it or the framework's LocalMap, no BOSS
+root grant is needed, and `MAPS_DIALOG` gives every signed-in user the dialog's services. The mount narrows what is
+shown and grants nothing; the adapter checks every read and save. Each View map passes `profileId: 'HOME'` (LocalMap's
+optional profile, which it hands to `get#EffectiveConfig` and carries on **Open in Maps**). An answer's route keys
+(`partyDetail`, `facilityDetail`, `assetDetail` and HOME's own) resolve through the framework's route-key registry
+(`moqui.maps.MapRoute`), where HOME registers rows for its screens. The rule is that a HOME dialog never links into
+BOSS: a key resolves to the HOME screen the user may open, preferring the host app's routes, and a record with no HOME
+screen gets no link. HOME does not reuse BOSS's `MapLinks.js`, whose fallback is BOSS's palette.
+
+HOME's launcher entry for Maps is the framework's Browse with HOME's profile (`/qapps/maps/Browse?profileId=HOME`),
+not a second map app. The HOME bundles that include Maps add their people to the framework's `MAPS_USERS` group, which
+holds `MAPS_APP` and `MAPS_APP_SERVICES`, never by way of `BOSS_USERS`. HOME grants no Maps artifact group to a group
+of its own: `MAPS_ADMIN` denies `MAPS_USERS` alone, and any other holder of `MAPS_APP` would reach Configuration
+through the root's inherited allow. A member without Maps still opens record dialogs, and Open in Maps shows only to
+a holder of the app's own grant.
+
+**HOME's adapters** (proposed keys). Each is a `moqui.maps.MapAdapter` seed row of HOME's, with its services granted
+to HOME's groups and each service checking the caller itself:
+
+| Adapter (layer) | Records | Reads and writes |
+| --- | --- | --- |
+| `homePlaces` (`HOME_PLACES`), with H2a | The household's homes, rooms, yard and other locations: Mantle facilities of the household organizations that have a point | Layer only; a place's dialog and Choose location are Mantle's `facility` adapter |
+| `homeBelongings` (`HOME_BELONGINGS`), with H2a | Home & Auto's belongings and vehicles that have a point of their own | Layer only; the dialog is Mantle's `asset` adapter |
+| `homePhotos` (`HOME_PHOTOS`), with H1b | Media photos with location metadata | Dialog and layer, read only (no store service): photos the viewer may view in Media, and another person's photo location only where its owner disclosed it in the share (§3.2). Nothing is written to an original |
+
+The layers are in HOME's `HOME` map profile, each with a `viewPermission` of HOME's, so only household members see
+them listed. Each applies the household scope in its query on every viewport, bounded by `maps@max-features`: the
+household organizations among the viewer's `userOrgIds`, whatever the active organization. They do not go through
+`filterOrgIds`, which Mantle's `get#PartyOrganizationInfo` narrows to the shared active organization. A narrowing that
+Mantle's facility and stock scope lacks is added in Mantle, never filtered after the bound. School adds no adapter: a
+learning resource can be a saved view, a places file or an overlay shared to its folder. An event or trip uses Mantle's
+`postalAddress` or `facility` adapter, or a plain point, until it carries a location of its own.
+
+**Mantle's dialogs need the HOME context.** Mantle's `facility`, `asset` and `party` adapters read through
+`FacilityScope`, `StockScope` and the party filter, all of which use `filterOrgIds`. So while David has his consulting
+organization active in BOSS, a household record's dialog in HOME is refused. This is §4.1's point that the shared
+active-organization preference is not enough. The Mantle change: an adapter takes a context organization from the
+mount (HOME passes the household it shows), accepts it only when it is among the caller's `userOrgIds`, and scopes
+the read and the save to it in place of the active organization. A save then lands on the record the dialog showed,
+whatever another tab has made active.
+
+**Access in the organization model** (§4.1, §4.2):
+
+- HOME's layers and search read only the household organizations the viewer belongs to: never David's consulting
+  organization, and never an organization under one by `PrtOrgRollup`. A person's own point and home address follow
+  Mantle's home-address rule ([MapAdapters](../../mr-mantle/docs/MapAdapters.md#who-reads-and-who-writes)).
+- Choosing a location needs Mantle's permission for the record (`PARTY_LOCATION_EDIT`, `FACILITY_EDIT`,
+  `MAINTENANCE_RESOURCE_EDIT`), granted to the bundles that keep the household's contacts, places and belongings. These
+  are global permissions checked within the user's organizations, so for a dual-suite user a grant from either suite
+  reaches both organizations' records: the gap §4.2's scoped checks close in Mantle, not with a HOME pass-through.
+  A viewer gets no Choose location, and a direct post to `storeLocation` is refused.
+- The household is an `OrgInternal` party. Under Mantle's internal-organization rule, its own address and point also
+  need `ADMIN_SETTINGS_MANAGE` and the household as the user's working organization. Decided: the organizer bundle
+  gets that right as a household-scoped grant from H0's capability model, never the global `ADMIN_SETTINGS_MANAGE`,
+  which would also reach the business's settings.
+- An invited relative or guest gets no household layer. They see the places and overlay files shared with them, and
+  Mantle's adapters give an outside user only their own places.
+- A household organizer does not see a member's saved places, overlays, searches or last view: these are in the
+  member's own drive and preferences.
+
+**Household and business layers stay apart**
+([Maps §4.2](../../../../../plans/Maps.md#42-metadata-and-effective-settings)). HOME's layers have their own IDs in
+their own profile, and layer visibility is kept by layer ID, so showing or hiding a layer in HOME changes no BOSS
+map. The other map preferences (`maps.profile`, basemap, initial area, units and the last view) are the person's in
+both suites. That is accepted, since they hold no record: HOME passes its profile on every entry, and BOSS passes its
+own on Open in Maps if it wants one. Mantle's `MANTLE_FACILITIES` and `MANTLE_ASSETS` read the user's organizations
+as Mantle's filter does (the active one when one is chosen): they are in no profile, and they stay out of HOME's
+profile and, on a dual-suite installation, out of the installation default. A saved view showing both is its owner's
+explicit choice. Basemaps, archives and Geo data are common to both.
+
+**Child records and location** ([Maps §8](../../../../../plans/Maps.md#8-access-publication-and-reliability), §1.1).
+A child explores, saves places and adds overlays in their own drive like any member, private unless they share them.
+No layer has a person dimension: the photo layer shows where permitted photos were taken, never one person's photos
+ordered into a track, and nothing infers where a member was or is. **Locate me** stays the framework's explicit
+browser permission, shown and not saved; Restore my last view is off unless the person turns it on. No organizer
+report of a child's map use exists. Person-location sharing is not part of this mount: a later feed is explicit,
+visible to the people it shows and revocable.
 
 ## 4. Accounts, organizations and sharing
 
@@ -782,7 +895,7 @@ design and identify which shared dependencies are built, need extension or remai
 | **H0: access and shared foundation** | HOME roots and context, Jones Household and consulting fixtures, scoped membership/capability model, explicit Commons/Comms root access, HOME-aware shared links; child autonomy/privacy defaults and Assist policy contract | A HOME-only user cannot discover or open BOSS apps; David can use both organizations without records or form writes crossing contexts; a child account has no route to unrestricted Assist. |
 | **H1a: household personal cloud** | Today, essential Household setup, Commons/Comms mounts, basic sharing and Home Lab sync/setup information; the first curated Child Assist option when its controls are ready | Household members share a calendar, folder and conversation; a relative sees only shared items; a child's personal note and AI conversation are not automatically exposed to an organizer. |
 | **H1b: Media** | Photo/music/video/ebook/audiobook libraries and viewers/readers/players; personal/shared collections and per-user book progress; ResourceFacade media APIs, source setup and indexing on all four backends | People read/listen to the same shared book with independent progress, browse photos and play music/video; equivalent facade-backed reading/seek behavior works on Postgres git, filesystem git, DbResource and plain local files. |
-| **H1c: Maps** | Shared Tools Maps in HOME context: OpenLayers browser and record dialog, personal/shared places, basic file overlays, OpenFreeMap and ResourceFacade PMTiles, global/personal settings and local postal lookup | A HOME-only user opens a contact's local map, recognizes a postal-area estimate, chooses a permitted location, and browses a local archive with external requests disabled; consulting and private household records remain separate. |
+| **H1c: Maps** | HOME over the built framework Maps (§3.9): the LocalMap mount under the Commons root with HOME's `MapRoute` rows, HOME's map profile, Maps through `MAPS_USERS`, and Mantle's context organization for HOME's dialogs; the framework's places, overlays, archives, postal lookup and settings unchanged. Home & Auto's mount and layers follow with H2a, the photo layer with H1b | A HOME-only user opens a contact's local map, recognizes a postal-area estimate, chooses a permitted location, and browses a local archive with external requests disabled; consulting and private household records remain separate (`MapsHomeOnlyWalk`, `MapsDualSuiteWalk`). |
 | **H2a: work around the home** | Projects plus Home & Auto's belongings, self-managed chores and repair tracking | A child plans and completes ordinary work independently and can ask for help; explicitly chosen review works; a repair retains its manual and history. |
 | **H2b: School** | Standalone School app, homework organization, basic curriculum outlines and learner plans, wiki/resource links, weekly planning and requirement/portfolio records | A household plans a term using an external curriculum, links wiki guides and Wikipedia/resource pages, tracks each learner's work and exports selected homeschool records; a homework-only learner starts without curriculum setup. |
 | **H3: kitchen** | Recipes, weekly meals and shared shopping first; optional pantry tracking next | A household plans meals, combines ingredient needs, shops from phones and records leftovers without configuring inventory accounting. |
@@ -792,8 +905,10 @@ design and identify which shared dependencies are built, need extension or remai
 H1b builds on the shared access/resource foundation; its five media types, personal book progress, ResourceFacade
 extensions and all four storage choices are initial scope, independent of later camera uploads or transcoding.
 The byte access under those extensions is framework Maps stage R (§3.2), shared with H1c.
-H1c follows framework Maps P0–P3 and the same access/resource foundation; it can progress independently of Media's
-catalog and players. Exact address geocoding is optional: local postal lookup and manual selection keep Maps useful.
+Framework Maps P0–P3 are built, so H1c needs H0's roots and groups and H1a's Commons mount, and is independent of
+Media's catalog and players. Home & Auto's View map and the `homePlaces` and `homeBelongings` layers come with H2a's
+screens, and the photo layer with H1b, over the same mount. Exact address geocoding is optional: local postal
+lookup and manual selection keep Maps useful.
 H2a and H2b can proceed independently once their shared
 foundations are ready; H3 and H4 can change order after review. School's basic curriculum planner belongs in its
 initial delivery, while platform integrations come later.
@@ -846,6 +961,40 @@ packaged styles/fonts, all four archive backends and revocation on later range r
 not create a location/activity report for an adult. Use small geographic fixtures; the framework plan owns the
 shared HTTP, provider and reference-data checks.
 
+The [framework plan's acceptance list](../../../../../plans/Maps.md#9-delivery-and-acceptance) leaves two walks to
+HOME, written with its first Maps screens in `test/acceptance/Maps/` and run when asked
+(`./moq accept mr-home --spec MapsHomeOnlyWalk`). Both walk visible navigation and direct requests to screens,
+transitions and services, over the fictitious household and consulting fixtures:
+
+- **`MapsHomeOnlyWalk`**: a HOME-only organizer, member and child, then an invited relative. The organizer, member
+  and child each open View map under each HOME mount with no BOSS, System or Monitor access: household places and
+  belongings show, a contact address with no point shows its approximate postal area, and Choose location appears
+  only with the record's edit permission. The organizer saves, including the household's own address through its
+  household-scoped grant; a member's direct post is refused and nothing changes. HOME's Maps entry opens Browse with
+  HOME's profile and layers, search finds household places but no consulting record, and Maps › Configuration is
+  refused to every HOME user (the `MAPS_USERS` deny). The consulting organization's facilities, assets and contacts
+  are unavailable through every mount, layer, search and adapter call, and the BOSS launcher entries and BOSS
+  `LocalMap` mounts are refused by direct URL. A household-drive collection shows to members. The organizer sees
+  none of a member's or the child's places, overlays or last view, and the child's Locate me stores nothing. The
+  invited relative opens no household mount or layer and sees only the overlay shared with them, until the share is
+  revoked.
+- **`MapsDualSuiteWalk`**: David in both organizations, a business-only staff user and a HOME-only member. In HOME,
+  David's layers and search show household places and never consulting ones, and the links lead to HOME screens; in
+  BOSS, the dialogs show consulting records with BOSS links. A layer shown or hidden in one suite leaves the other's
+  map as it was. It is written against Mantle's context-organization change, whose requirement it checks: with the
+  consulting organization active in BOSS (another tab), a household record's dialog in HOME reads, and a location
+  chosen there lands on that household record. The staff user reaches no household place, and the HOME-only member
+  no consulting one, through any mount, layer, search or direct call.
+
+HOME's regression specs (`test/`, within its budget) test HOME's own rules, each on a small fixture: each layer
+adapter's household scope (another organization's and a business record left out by the query, a truncated
+viewport, the `viewPermission`, a business organization active); the photo adapter (a photo the viewer may not view,
+an undisclosed location, no store); HOME's `MapRoute` rows resolving to HOME screens and never to BOSS; and the mount
+under one HOME root, reached by that root's grant with no BOSS grant. As in BOSS's `test/Shared/RecordMap.spec.js`,
+the dialog is rendered once, in html, for a reader. Refusals and saves are checked through `get#EffectiveConfig` (as
+the user) and the mount's `storeLocation`, not by more renders. Mantle's adapter rules, the context organization
+among them, are tested in Mantle and not again through HOME, and no regression test sweeps HOME's screens.
+
 Implementation follows the repository's fast-spec practices. Slow scenarios are only run when their specific
 output is needed and the user explicitly authorizes them; they are not a routine coverage step. This document-only
 draft requires no build or application test run.
@@ -883,7 +1032,10 @@ The following choices remain proposals rather than settled requirements:
    transcoding can be prioritized separately.
 10. **Maps priorities:** which regions/countries, postal datasets and geographic imports should guide the first
     profiles? OpenLayers, the shared Tools browser/dialog, OpenFreeMap and ResourceFacade PMTiles are decided;
-    selection of an optional full address/place search provider and richer GIS workflows remains open.
+    selection of an optional full address/place search provider and richer GIS workflows remains open. When an
+    operator enables a geocoder, should a child's Maps offer outside address search, which sends the typed text to
+    that service? `find#Places` is in `MAPS_APP_SERVICES` with saved views and places, so a child-specific choice may
+    need that framework group split.
 
 ## 9. Research basis
 
