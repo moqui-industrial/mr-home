@@ -71,7 +71,7 @@ The current sources distinguish working foundations from planned capabilities:
 | Admin and operations | Framework identity, sessions, credentials, monitoring and operational tools; the BOSS Admin design | [Admin](../../mr-boss/plan/design-admin.md) is built (the [Admin implementation](../../mr-boss/plan/impl-admin.md) records P1–P19), with its generic screens now the framework's System screens. Delegated household administration is new work over it. |
 | Sync and collaboration | WebDAV, CalDAV, CardDAV, SFTP, file versions and native collaborative notes | These have [Sync](../../../../../docs/interfaces/Sync.md) and [Revision management](../../../../../docs/data/Revision-Management.md) guides. Their documented limits still apply. |
 | Media storage and delivery | ResourceFacade/`ResourceRef`, drive access, image previews, git and DbResource versions, content blobs and streamed file responses with byte ranges | [Revision management](../../../../../docs/data/Revision-Management.md) and [Git hosting](../../../../../docs/interfaces/Git-Hosting.md) document the foundations. The media/ebook libraries, readers/players, personal progress and consistent media access across all four storage backends are new work. |
-| Maps and geographic data | The Tools Maps app and local-map dialog, Geo data and postal lookup, Mantle's record adapters and ResourceFacade range streaming | [Framework Maps](../../../../../docs/tools/Maps.md) is built through P3 of [its plan](../../../../../plans/Maps.md): the OpenLayers browser and dialog, hosted and self-hosted basemaps, personal/global configuration, overlays and saved places, the postal-code fallback and Mantle's adapters ([MapAdapters](../../mr-mantle/docs/MapAdapters.md)). HOME's mount, adapters and walks are new work (§3.9). |
+| Maps and geographic data | The Tools Maps app and local-map dialog, Geo data and postal lookup, Mantle's record adapters and ResourceFacade range streaming | [Framework Maps](../../../../../docs/tools/Maps.md) is built through P3 of [its plan](../../../../../plans/archive/Maps.md): the OpenLayers browser and dialog, hosted and self-hosted basemaps, personal/global configuration, overlays and saved places, the postal-code fallback and Mantle's adapters ([MapAdapters](../../mr-mantle/docs/MapAdapters.md)). HOME's mount, adapters and walks are new work (§3.9). |
 
 Reuse in three ways:
 
@@ -228,7 +228,7 @@ each serving node.
 **ResourceFacade API extensions.** Detailed method names remain to be designed; the required contract is below.
 Its byte-access part (description, bounded seeking, pinned revisions, ranged and conditional HTTP responses) is
 framework work with one owner,
-[framework Maps §5](../../../../../plans/Maps.md#5-resourcefacade-and-tile-streaming), as its stage R: that
+[framework Maps §5](../../../../../plans/archive/Maps.md#5-resourcefacade-and-tile-streaming), as its stage R: that
 section lists what is built (`ByteSource` behind `ResourceFacade::open`, one ranged response path) and what remains
 for each of the four backends, and whichever of Media and Maps starts first builds it there. Media adds only what
 is its own: related resources and processing handles.
@@ -523,7 +523,7 @@ Expose **Maps** in HOME using the framework-owned app in `components/base/tools`
 permitted record layers. The same generic interface serves BOSS and potentially PASS and other components; HOME
 does not maintain a separate map engine, tile service or geographic database. The selected renderer is
 **OpenLayers**, whose formats, coordinate systems and GIS capabilities suit both business use and the likely HOME
-audience. The complete framework design and staged scope are in [Maps](../../../../../plans/Maps.md), and what is
+audience. The complete framework design and staged scope are in [Maps](../../../../../plans/archive/Maps.md), and what is
 built in the [Maps guide](../../../../../docs/tools/Maps.md).
 
 Initial household use includes:
@@ -551,7 +551,7 @@ the same import contract. Research did not verify a current open USPS ZIP-coordi
 standardization is a separate possible integration. Source/edition, code granularity and precision remain visible.
 An approximate postal-area marker uses a broad view and is never silently saved as the home's or asset's precise
 position. A household can use this fallback with all external requests disabled, then explicitly choose a better
-point or a configured address lookup. The [framework research](../../../../../plans/Maps.md#62-sources-researched)
+point or a configured address lookup. The [framework research](../../../../../plans/archive/Maps.md#62-sources-researched)
 records the dataset and provider limitations.
 
 **Cross-app use follows the source record's access.** Commons contacts, Home & Auto facilities/assets and suitable
@@ -571,7 +571,7 @@ placement work. Full route planning, background location feeds, home-device cont
 integrations remain later capabilities with their own research and access design.
 
 **What HOME builds over the framework.** Framework Maps is built through its P3
-([Maps §9](../../../../../plans/Maps.md#9-delivery-and-acceptance)); the BOSS mount is the precedent
+([Maps §9](../../../../../plans/archive/Maps.md#9-delivery-and-acceptance)); the BOSS mount is the precedent
 ([BOSS §3.32](../../mr-boss/plan/design-crosscut.md#332-maps-and-record-location-dialogs),
 [`Shared/LocalMap.xml`](../../mr-boss/screen/Shared/LocalMap.xml)). HOME reuses these, with the framework and Mantle
 changes named below, and adds no map entity, engine or configuration screen:
@@ -661,7 +661,7 @@ whatever another tab has made active.
   member's own drive and preferences.
 
 **Household and business layers stay apart**
-([Maps §4.2](../../../../../plans/Maps.md#42-metadata-and-effective-settings)). HOME's layers have their own IDs in
+([Maps §4.2](../../../../../plans/archive/Maps.md#42-metadata-and-effective-settings)). HOME's layers have their own IDs in
 their own profile, and layer visibility is kept by layer ID, so showing or hiding a layer in HOME changes no BOSS
 map. The other map preferences (`maps.profile`, basemap, initial area, units and the last view) are the person's in
 both suites. That is accepted, since they hold no record: HOME passes its profile on every entry, and BOSS passes its
@@ -670,7 +670,7 @@ as Mantle's filter does (the active one when one is chosen): they are in no prof
 profile and, on a dual-suite installation, out of the installation default. A saved view showing both is its owner's
 explicit choice. Basemaps, archives and Geo data are common to both.
 
-**Child records and location** ([Maps §8](../../../../../plans/Maps.md#8-access-publication-and-reliability), §1.1).
+**Child records and location** ([Maps §8](../../../../../plans/archive/Maps.md#8-access-publication-and-reliability), §1.1).
 A child explores, saves places and adds overlays in their own drive like any member, private unless they share them.
 No layer has a person dimension: the photo layer shows where permitted photos were taken, never one person's photos
 ordered into a track, and nothing infers where a member was or is. **Locate me** stays the framework's explicit
@@ -961,7 +961,7 @@ packaged styles/fonts, all four archive backends and revocation on later range r
 not create a location/activity report for an adult. Use small geographic fixtures; the framework plan owns the
 shared HTTP, provider and reference-data checks.
 
-The [framework plan's acceptance list](../../../../../plans/Maps.md#9-delivery-and-acceptance) leaves two walks to
+The [framework plan's acceptance list](../../../../../plans/archive/Maps.md#9-delivery-and-acceptance) leaves two walks to
 HOME, written with its first Maps screens in `test/acceptance/Maps/` and run when asked
 (`./moq accept mr-home --spec MapsHomeOnlyWalk`). Both walk visible navigation and direct requests to screens,
 transitions and services, over the fictitious household and consulting fixtures:
@@ -1047,5 +1047,5 @@ ResourceFacade/version, drive/root-location, DbResource, git/LFS content and str
 External research was limited to primary project sources, checked November 1, 2026: Nextcloud for the personal-cloud
 scope, Grocy and Mealie for household kitchen patterns, and Home Assistant's APIs for the future integration
 question. These inform the proposal; none is a required dependency or a commitment to feature parity.
-The [Maps research and decisions](../../../../../plans/Maps.md) add OpenLayers, hosted and downloadable basemaps,
+The [Maps research and decisions](../../../../../plans/archive/Maps.md) add OpenLayers, hosted and downloadable basemaps,
 postal/geocoding sources and their limits; those named map dependencies are selected explicitly in §3.9.
